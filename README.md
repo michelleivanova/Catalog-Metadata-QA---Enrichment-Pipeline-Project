@@ -2,6 +2,8 @@
 
 Pull metadata from MusicBrainz, load into SQLite, run QA checks, and enrich issues with LLM suggestions.
 
+Built an automated music catalog metadata QA + enrichment pipeline (Python, SQLite, API integration) that detects missing fields/duplicates and generates structured remediation suggestions using an LLM-ready enrichment stage with graceful fallback behavior.
+
 ## Project Highlights
 - Built an end-to-end pipeline: MusicBrainz API → JSONL → SQLite → QA rules → enriched remediation suggestions
 - Uses SQL-style storage (SQLite) to support scalable downstream transformations
@@ -44,4 +46,20 @@ python src/qa_checks.py --db data/catalog.db --out data/output/qa_issues.csv
 
 # 4) Enrich QA issues (offline / reproducible)
 python src/llm_enrich.py --mode stub --infile data/output/qa_issues.csv --out data/output/qa_enriched.jsonl
+
+## Tech Stack
+- Python (scripts + pipeline orchestration)
+- MusicBrainz API (source metadata)
+- SQLite (queryable storage layer)
+- Rule-based QA checks (missing fields, duplicates)
+- LLM-ready enrichment step (`--mode openai` with safe fallback to `--mode stub`)
+
+## Outputs
+- `data/raw/recordings.jsonl` — raw normalized pulls from MusicBrainz
+- `data/catalog.db` — SQLite database of recordings
+- `data/output/qa_issues.csv` — detected QA issues
+- `data/output/qa_enriched.jsonl` — structured remediation suggestions per issue
+
+
+
 
