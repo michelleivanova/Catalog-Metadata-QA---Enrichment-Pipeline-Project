@@ -39,4 +39,8 @@ python src/qa_checks.py --db data/catalog.db --out data/output/qa_issues.csv
 # 4) Enrich QA issues (offline / reproducible)
 python src/llm_enrich.py --mode stub --infile data/output/qa_issues.csv --out data/output/qa_enriched.jsonl
 
-```
+
+
+## One-command run
+```bash
+make all
