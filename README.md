@@ -2,7 +2,7 @@
 
 End-to-end automation pipeline for music catalog metadata quality checks and remediation suggestions.
 
-**Summary (resume-style):** Built an automated music catalog metadata QA + enrichment pipeline (Python, SQLite, API integration) that detects missing fields/duplicates and generates structured remediation suggestions via an LLM-ready enrichment stage with graceful fallback behavior.
+**Summary:** Built an automated music catalog metadata QA + enrichment pipeline (Python, SQLite, API integration) that detects missing fields/duplicates and generates structured remediation suggestions via an LLM-ready enrichment stage with graceful fallback behavior.
 
 ## Project Highlights
 - End-to-end pipeline: **MusicBrainz API → JSONL → SQLite → QA rules → enriched remediation suggestions**
