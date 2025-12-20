@@ -2,6 +2,14 @@
 
 Pull metadata from MusicBrainz, load into SQLite, run QA checks, and enrich issues with LLM suggestions.
 
+## Project Highlights
+- Built an end-to-end pipeline: MusicBrainz API → JSONL → SQLite → QA rules → enriched remediation suggestions
+- Uses SQL-style storage (SQLite) to support scalable downstream transformations
+- Enrichment supports `--mode openai` and falls back safely to `--mode stub` to keep the pipeline reliable
+- Outputs machine-readable artifacts (`qa_issues.csv`, `qa_enriched.jsonl`) for automation workflows
+
+
+
 ## What this does
 End-to-end metadata QA + enrichment pipeline:
 1) Pull recording metadata from MusicBrainz (JSONL)
