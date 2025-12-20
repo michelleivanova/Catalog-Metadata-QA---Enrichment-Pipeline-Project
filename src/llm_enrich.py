@@ -41,21 +41,37 @@ def enrich_stub(issue_type: str, detail: str) -> dict:
     }
 
 
-def enrich_openai(model: str, prompt: str) -> dict:
+def enrich_openai(model: str, prompt: str, fallback: dict) -> dict:
+    """
+    Calls OpenAI and attempts to parse JSON output.
+    If the call fails (quota, billing, rate limit, network, etc.), returns a fallback dict.
+    """
     from openai import OpenAI
+
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    resp = client.responses.create(
-        model=model,
-        input=prompt,
-        temperature=0.2
-    )
-    text = resp.output_text.strip()
-
     try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        return {"suggested_fix": None, "confidence": "low", "notes": f"Non-JSON output: {text[:200]}"}
+        resp = client.responses.create(
+            model=model,
+            input=prompt,
+            temperature=0.2,
+        )
+        text = resp.output_text.strip()
+
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return {
+                "suggested_fix": None,
+                "confidence": "low",
+                "notes": f"Non-JSON output: {text[:200]}",
+            }
+
+    except Exception as e:
+        out = dict(fallback)
+        out["confidence"] = "low"
+        out["notes"] = f"LLM error: {type(e).__name__}"
+        return out
 
 
 def main():
@@ -66,6 +82,9 @@ def main():
     ap.add_argument("--model", default="gpt-4.1-mini")
     args = ap.parse_args()
 
+    # If you want to load from a nonstandard env file, you can do:
+    # load_dotenv(".env.LLMmode")
+    # Otherwise, this loads `.env` if present:
     load_dotenv()
 
     df = pd.read_csv(args.infile)
@@ -78,7 +97,8 @@ def main():
 
             if args.mode == "openai":
                 prompt = build_prompt(issue_type, detail)
-                enriched = enrich_openai(args.model, prompt)
+                fallback = enrich_stub(issue_type, detail)
+                enriched = enrich_openai(args.model, prompt, fallback)
             else:
                 enriched = enrich_stub(issue_type, detail)
 
@@ -86,7 +106,7 @@ def main():
                 "issue_type": issue_type,
                 "recording_mbid": None if pd.isna(r.get("recording_mbid")) else r.get("recording_mbid"),
                 "detail": detail,
-                **enriched
+                **enriched,
             }
             f.write(json.dumps(out_row, ensure_ascii=False) + "\n")
 
