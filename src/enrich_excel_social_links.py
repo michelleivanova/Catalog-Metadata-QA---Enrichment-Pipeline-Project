@@ -18,6 +18,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Dict, List, Optional, Any
+from urllib.parse import urlparse
 
 import pandas as pd
 import requests
@@ -186,6 +187,28 @@ def get_artist_details(mbid: str) -> Optional[Dict]:
     return None
 
 
+def _is_domain(url: str, domains: List[str]) -> bool:
+    """
+    Check if URL host matches one of the specified domains.
+
+    Uses proper URL parsing to prevent subdomain spoofing attacks
+    (e.g., 'evil.instagram.com.attacker.com').
+    """
+    try:
+        parsed = urlparse(url)
+        host = parsed.netloc.lower()
+        # Remove port if present
+        if ":" in host:
+            host = host.split(":")[0]
+        # Check if host matches or ends with the domain (for subdomains like www.)
+        for domain in domains:
+            if host == domain or host.endswith("." + domain):
+                return True
+        return False
+    except Exception:
+        return False
+
+
 def extract_social_links(artist_data: Dict) -> Dict[str, Optional[str]]:
     """
     Extract social media links from MusicBrainz artist data.
@@ -216,11 +239,10 @@ def extract_social_links(artist_data: Dict) -> Dict[str, Optional[str]]:
         if not url:
             continue
 
-        url_lower = url.lower()
         rel_type = rel.get("type", "")
 
         # Instagram
-        if "instagram.com" in url_lower:
+        if _is_domain(url, ["instagram.com"]):
             result["instagram_url"] = url
             # Extract handle from URL
             parts = url.rstrip("/").split("/")
@@ -228,7 +250,7 @@ def extract_social_links(artist_data: Dict) -> Dict[str, Optional[str]]:
                 result["instagram_handle"] = parts[-1]
 
         # TikTok
-        elif "tiktok.com" in url_lower:
+        elif _is_domain(url, ["tiktok.com"]):
             result["tiktok_url"] = url
             parts = url.rstrip("/").split("/")
             if len(parts) > 0:
@@ -237,7 +259,7 @@ def extract_social_links(artist_data: Dict) -> Dict[str, Optional[str]]:
                 result["tiktok_handle"] = handle.lstrip("@")
 
         # YouTube
-        elif "youtube.com" in url_lower or "youtu.be" in url_lower:
+        elif _is_domain(url, ["youtube.com", "youtu.be"]):
             result["youtube_url"] = url
             # Extract channel ID if present
             if "/channel/" in url:
@@ -246,14 +268,14 @@ def extract_social_links(artist_data: Dict) -> Dict[str, Optional[str]]:
                     result["youtube_channel_id"] = parts[1].split("/")[0].split("?")[0]
 
         # SoundCloud
-        elif "soundcloud.com" in url_lower:
+        elif _is_domain(url, ["soundcloud.com"]):
             result["soundcloud_url"] = url
             parts = url.rstrip("/").split("/")
             if len(parts) > 0:
                 result["soundcloud_handle"] = parts[-1]
 
         # Twitter/X
-        elif "twitter.com" in url_lower or "x.com" in url_lower:
+        elif _is_domain(url, ["twitter.com", "x.com"]):
             result["twitter_url"] = url
             parts = url.rstrip("/").split("/")
             if len(parts) > 0:
@@ -261,7 +283,7 @@ def extract_social_links(artist_data: Dict) -> Dict[str, Optional[str]]:
                 result["twitter_handle"] = handle.lstrip("@")
 
         # Facebook
-        elif "facebook.com" in url_lower:
+        elif _is_domain(url, ["facebook.com"]):
             result["facebook_url"] = url
 
         # Official website (capture official homepage type, but only if not already set)
