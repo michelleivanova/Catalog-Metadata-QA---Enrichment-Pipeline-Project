@@ -10,4 +10,7 @@ qa:
 enrich:
 	python src/llm_enrich.py --mode stub --infile data/output/qa_issues.csv --out data/output/qa_enriched.jsonl
 
+enrich-excel:
+	python src/enrich_excel_social_links.py --data-dir data
+
 all: pull load qa enrich
