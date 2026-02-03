@@ -128,7 +128,7 @@ class TestExtractSocialLinks:
         artist_data = {
             "relations": [
                 {
-                    "type": "url",
+                    "type": "social network",
                     "url": {"resource": "https://instagram.com/testartist"},
                 }
             ]
@@ -142,7 +142,7 @@ class TestExtractSocialLinks:
         artist_data = {
             "relations": [
                 {
-                    "type": "url",
+                    "type": "youtube",
                     "url": {"resource": "https://youtube.com/channel/UC12345"},
                 }
             ]
@@ -156,7 +156,7 @@ class TestExtractSocialLinks:
         artist_data = {
             "relations": [
                 {
-                    "type": "url",
+                    "type": "social network",
                     "url": {"resource": "https://twitter.com/testuser"},
                 }
             ]
@@ -170,7 +170,7 @@ class TestExtractSocialLinks:
         artist_data = {
             "relations": [
                 {
-                    "type": "url",
+                    "type": "social network",
                     "url": {"resource": "https://x.com/testuser"},
                 }
             ]
@@ -190,15 +190,15 @@ class TestExtractSocialLinks:
         artist_data = {
             "relations": [
                 {
-                    "type": "url",
+                    "type": "social network",
                     "url": {"resource": "https://instagram.com/artist"},
                 },
                 {
-                    "type": "url",
+                    "type": "social network",
                     "url": {"resource": "https://facebook.com/artist"},
                 },
                 {
-                    "type": "url",
+                    "type": "soundcloud",
                     "url": {"resource": "https://soundcloud.com/artist"},
                 },
             ]
@@ -207,6 +207,19 @@ class TestExtractSocialLinks:
         assert result["instagram_url"] == "https://instagram.com/artist"
         assert result["facebook_url"] == "https://facebook.com/artist"
         assert result["soundcloud_url"] == "https://soundcloud.com/artist"
+
+    def test_extract_official_homepage(self):
+        """Test extracting official homepage URL."""
+        artist_data = {
+            "relations": [
+                {
+                    "type": "official homepage",
+                    "url": {"resource": "https://artist-website.com"},
+                }
+            ]
+        }
+        result = extract_social_links(artist_data)
+        assert result["website_url"] == "https://artist-website.com"
 
 
 class TestGetArtistNamesFromExcel:

@@ -25,7 +25,7 @@ from openpyxl import load_workbook
 
 # MusicBrainz API configuration
 MB_BASE = "https://musicbrainz.org/ws/2"
-HEADERS = {"User-Agent": "catalog-metadata-qa/0.1 (contact: you@example.com)"}
+HEADERS = {"User-Agent": "catalog-metadata-qa/0.1 (github.com/michelleivanova/Catalog-Metadata-QA---Enrichment-Pipeline-Project)"}
 
 # Rate limiting: MusicBrainz allows ~1 request per second
 RATE_LIMIT_DELAY = 1.1
@@ -209,9 +209,7 @@ def extract_social_links(artist_data: Dict) -> Dict[str, Optional[str]]:
 
     relations = artist_data.get("relations", [])
     for rel in relations:
-        if rel.get("type") != "url":
-            continue
-
+        # MusicBrainz relations have a 'url' object containing the resource URL
         url_data = rel.get("url", {})
         url = url_data.get("resource", "")
 
@@ -219,6 +217,7 @@ def extract_social_links(artist_data: Dict) -> Dict[str, Optional[str]]:
             continue
 
         url_lower = url.lower()
+        rel_type = rel.get("type", "")
 
         # Instagram
         if "instagram.com" in url_lower:
@@ -265,8 +264,8 @@ def extract_social_links(artist_data: Dict) -> Dict[str, Optional[str]]:
         elif "facebook.com" in url_lower:
             result["facebook_url"] = url
 
-        # Official website (last resort for non-social URLs)
-        elif result["website_url"] is None and rel.get("type") == "official homepage":
+        # Official website (capture official homepage type, but only if not already set)
+        elif result["website_url"] is None and rel_type == "official homepage":
             result["website_url"] = url
 
     return result
