@@ -15,6 +15,7 @@ from src.enrich_excel_social_links import (
     CheckpointManager,
     MusicBrainzCache,
     RateLimiter,
+    _is_domain,
     extract_social_links,
     get_artist_names_from_excel,
     update_social_links_sheet,
@@ -47,6 +48,46 @@ class TestSocialLinksColumns:
     def test_column_count(self):
         """Verify correct number of columns."""
         assert len(SOCIAL_LINKS_COLUMNS) == 14
+
+
+class TestIsDomain:
+    """Tests for _is_domain helper function."""
+
+    def test_exact_domain_match(self):
+        """Test exact domain matching."""
+        assert _is_domain("https://instagram.com/user", ["instagram.com"]) is True
+        assert _is_domain("https://twitter.com/user", ["twitter.com"]) is True
+
+    def test_subdomain_match(self):
+        """Test matching with www subdomain."""
+        assert _is_domain("https://www.instagram.com/user", ["instagram.com"]) is True
+        assert _is_domain("https://www.facebook.com/page", ["facebook.com"]) is True
+
+    def test_subdomain_spoofing_rejected(self):
+        """Test that subdomain spoofing attacks are rejected."""
+        # This should NOT match - attacker.com is the real domain
+        assert _is_domain("https://instagram.com.attacker.com/user", ["instagram.com"]) is False
+        assert _is_domain("https://evil.instagram.com.hacker.org/", ["instagram.com"]) is False
+
+    def test_multiple_domains(self):
+        """Test matching against multiple domains."""
+        assert _is_domain("https://youtube.com/channel", ["youtube.com", "youtu.be"]) is True
+        assert _is_domain("https://youtu.be/video", ["youtube.com", "youtu.be"]) is True
+        assert _is_domain("https://vimeo.com/video", ["youtube.com", "youtu.be"]) is False
+
+    def test_case_insensitive(self):
+        """Test case insensitive matching."""
+        assert _is_domain("https://INSTAGRAM.COM/user", ["instagram.com"]) is True
+        assert _is_domain("https://Twitter.Com/user", ["twitter.com"]) is True
+
+    def test_url_with_port(self):
+        """Test URL with port number."""
+        assert _is_domain("https://instagram.com:443/user", ["instagram.com"]) is True
+
+    def test_invalid_url(self):
+        """Test handling of invalid URLs."""
+        assert _is_domain("not-a-url", ["instagram.com"]) is False
+        assert _is_domain("", ["instagram.com"]) is False
 
 
 class TestMusicBrainzCache:
